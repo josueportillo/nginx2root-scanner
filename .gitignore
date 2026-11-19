@@ -1,0 +1,18 @@
+# Runtime data & logs
+scans.db
+*.db
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Environment
+.env
+.env.*
+
+# Local test artifacts
+*.json
+
+# OS
+.DS_Store

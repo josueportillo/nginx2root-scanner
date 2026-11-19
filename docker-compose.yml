@@ -1,0 +1,10 @@
+services:
+  scanner:
+    build: .
+    image: nginx2root-scanner
+    container_name: nginx2root-scanner
+    ports:
+      - "8095:8095"
+    environment:
+      NGINX2ROOT_PORT: "8095"
+    restart: unless-stopped

@@ -1,0 +1,10 @@
+__pycache__
+*.pyc
+*.py[cod]
+scans.db
+*.db
+*.log
+*.json
+.git
+.env
+.env.*

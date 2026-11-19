@@ -1,0 +1,16 @@
+[Unit]
+Description=nginx2root vulnerability scanner (detection only)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=administrator
+WorkingDirectory=/opt/nginx2root-scanner
+ExecStart=/usr/bin/python3 /opt/nginx2root-scanner/server.py
+Environment=NGINX2ROOT_PORT=8095
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

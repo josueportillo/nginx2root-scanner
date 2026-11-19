@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nginx2root scanner</title>
+<style>
+:root{
+  --bg:#0b0e14; --panel:#12161f; --panel2:#181d29; --line:#232a3a;
+  --text:#e6eaf2; --muted:#8b94a7; --accent:#4f8cff; --accent2:#7c5cff;
+  --red:#ff5c6c; --orange:#ffa53c; --yellow:#e8c94b; --green:#35d07f;
+  --gray:#6b7280; --blue:#5aa9ff;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:radial-gradient(1200px 600px at 20% -10%,#16203a 0%,var(--bg) 55%);
+  color:var(--text);min-height:100vh}
+.wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px}
+header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px}
+h1{font-size:22px;margin:0;letter-spacing:-.02em}
+.sub{color:var(--muted);font-size:13px;margin-top:2px}
+.searchbar{display:flex;gap:10px;flex-wrap:wrap}
+input[type=text]{flex:1;min-width:260px;background:var(--panel);border:1px solid var(--line);
+  color:var(--text);padding:14px 16px;border-radius:12px;font-size:15px;outline:none;transition:border .15s}
+input[type=text]:focus{border-color:var(--accent)}
+button{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;color:#fff;
+  padding:14px 24px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:transform .1s,opacity .15s}
+button:hover{opacity:.92;transform:translateY(-1px)}
+button:disabled{opacity:.5;cursor:default;transform:none}
+.layout{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start}
+@media(max-width:820px){.layout{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.card h2{font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 12px}
+.history-item{padding:10px 12px;border-radius:10px;cursor:pointer;font-size:13px;margin-bottom:6px;
+  border:1px solid transparent;transition:background .12s,border .12s}
+.history-item:hover{background:var(--panel2);border-color:var(--line)}
+.history-item .t{font-weight:600}
+.history-item .s{font-size:11px;margin-top:2px}
+#status{color:var(--muted);font-size:14px;min-height:20px;margin-bottom:12px}
+.banner{border-radius:14px;padding:18px 20px;margin-bottom:18px;border:1px solid var(--line);background:var(--panel)}
+.banner.vulnerable{border-color:var(--red);background:linear-gradient(135deg,rgba(255,92,108,.14),rgba(255,92,108,.04))}
+.banner.likely{border-color:var(--orange);background:linear-gradient(135deg,rgba(255,165,60,.13),rgba(255,165,60,.03))}
+.banner.mitigated{border-color:var(--yellow);background:linear-gradient(135deg,rgba(232,201,75,.12),rgba(232,201,75,.03))}
+.banner.not_affected,.banner.patched{border-color:var(--green);background:linear-gradient(135deg,rgba(53,208,127,.12),rgba(53,208,127,.03))}
+.banner.inconclusive{border-color:var(--gray);background:var(--panel)}
+.banner .ov{font-size:20px;font-weight:800;letter-spacing:-.01em;margin-bottom:6px}
+.banner .tg{color:var(--muted);font-size:13px}
+.badge{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.05em}
+.badge.vulnerable{background:rgba(255,92,108,.18);color:var(--red)}
+.badge.likely{background:rgba(255,165,60,.18);color:var(--orange)}
+.badge.mitigated{background:rgba(232,201,75,.18);color:var(--yellow)}
+.badge.not_affected,.badge.patched{background:rgba(53,208,127,.18);color:var(--green)}
+.badge.inconclusive{background:rgba(107,114,128,.2);color:var(--gray)}
+.badge.info{background:rgba(90,169,255,.16);color:var(--blue)}
+.cve{border:1px solid var(--line);border-left:4px solid var(--gray);border-radius:10px;
+  padding:14px 16px;margin-bottom:10px;background:var(--panel)}
+.cve.vulnerable{border-left-color:var(--red)}
+.cve.likely{border-left-color:var(--orange)}
+.cve.mitigated{border-left-color:var(--yellow)}
+.cve.not_affected,.cve.patched{border-left-color:var(--green)}
+.cve.inconclusive{border-left-color:var(--gray)}
+.cve.info{border-left-color:var(--blue)}
+.cve .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.cve .id{font-weight:700;font-size:14px}
+.cve .ttl{color:var(--muted);font-size:12px;margin-top:2px}
+.cve .why{font-size:13px;margin-top:10px;line-height:1.5;color:var(--text)}
+.cve .req{font-size:12px;margin-top:8px;color:var(--muted)}
+.cve .req b{color:var(--text)}
+.fp-table{width:100%;border-collapse:collapse;font-size:13px}
+.fp-table td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.fp-table td:first-child{color:var(--muted);white-space:nowrap;width:200px}
+.fp-table td:last-child{word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.hidden{display:none}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">n2r</div>
+      <div>
+        <h1>nginx2root scanner</h1>
+        <div class="sub">Probe a host for the nginx2root CVEs (detection only — no exploit payloads)</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="searchbar" style="margin-bottom:24px">
+    <input type="text" id="target" placeholder="example.com  (domain or https://…)" />
+    <button id="go">Scan</button>
+  </div>
+
+  <div id="status"></div>
+
+  <div class="layout">
+    <aside>
+      <div class="card">
+        <h2>Scan history</h2>
+        <div id="history"><div class="note">No scans yet.</div></div>
+      </div>
+      <div class="card">
+        <h2>Coverage</h2>
+        <div class="note" style="color:var(--text)">
+          <b style="color:var(--red)">CVE-2026-123007</b> — HTTP/2 flow-control RCE<br>
+          <b style="color:var(--orange)">CVE-2026-123634</b> — resolver UAF<br>
+          <b style="color:var(--orange)">CVE-2026-123633</b> — HTTP/2 UAF (upstream)<br>
+          <b style="color:var(--orange)">CVE-2026-121810</b> — HTTP/3 UAF (upstream)<br>
+          <b style="color:var(--orange)">CVE-2026-113425</b> — mail proxy UAF<br>
+          <b style="color:var(--blue)">SCTP-LPE</b> — kernel LPE (chained)
+        </div>
+        <div class="note" style="margin-top:10px">
+          Source: <a href="https://nginx2root.com" target="_blank">nginx2root.com</a> ·
+          <a href="https://xint.io/blog/nginx2root-remote-code-execution" target="_blank">Xint writeup</a>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <div id="results"><div class="note">Enter a target and click Scan to run the probes.</div></div>
+    </main>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const STATUS_LABEL = {
+  vulnerable: "VULNERABLE",
+  likely: "LIKELY",
+  mitigated: "PATCH PENDING",
+  not_affected: "NOT AFFECTED",
+  patched: "PATCHED",
+  inconclusive: "INCONCLUSIVE",
+  info: "INFO"
+};
+
+async function loadHistory(){
+  try{
+    const r = await fetch('/api/history');
+    const d = await r.json();
+    const el = $('#history');
+    if(!d.scans || !d.scans.length){ el.innerHTML = '<div class="note">No scans yet.</div>'; return; }
+    el.innerHTML = d.scans.map(s => `
+      <div class="history-item" onclick="loadScan(${s.id})">
+        <div class="t">${esc(s.target)}</div>
+        <div class="s"><span class="badge ${s.overall_status}">${STATUS_LABEL[s.overall_status]||s.overall_status}</span></div>
+      </div>`).join('');
+  }catch(e){}
+}
+
+function esc(x){ return String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function render(r){
+  const ov = r.overall_status || 'inconclusive';
+  const fp = r.fingerprint || {};
+  const v = r.verdicts || [];
+  const cveCards = v.map(c => `
+    <div class="cve ${c.status}">
+      <div class="top">
+        <div>
+          <div class="id">${esc(c.id)}</div>
+          <div class="ttl">${esc(c.title)}</div>
+        </div>
+        <span class="badge ${c.status}">${STATUS_LABEL[c.status]||c.status}</span>
+      </div>
+      <div class="why">${esc(c.reason||'')}</div>
+      ${c.requires ? `<div class="req"><b>Requires:</b> ${esc(c.requires)}</div>` : ''}
+    </div>`).join('');
+
+  const ver = fp.version_str ? fp.version_str : (fp.server ? '(not parsed)' : '(none)');
+  const alpn = fp.alpn || 'none negotiated';
+  const mailRows = (fp.mail||[]).map(m =>
+    `<tr><td>${m.port}</td><td>${m.open ? '<span style="color:var(--green)">open</span> — '+esc(m.banner||'') : '<span style="color:var(--gray)">closed/filtered</span>'}</td></tr>`).join('');
+
+  let fpHtml = `
+    <table class="fp-table">
+      <tr><td>Host</td><td>${esc(fp.host||'')}</td></tr>
+      <tr><td>Resolved IPs</td><td>${esc((fp.resolved_ips||[]).join(', '))}</td></tr>
+      <tr><td>Server header</td><td>${esc(fp.server||'(none)')}</td></tr>
+      <tr><td>nginx detected</td><td>${fp.is_nginx ? 'yes' : 'no'}</td></tr>
+      <tr><td>nginx version</td><td>${esc(ver)}</td></tr>
+      <tr><td>HTTP/1.1 :80</td><td>${fp.http_open ? 'open (status '+fp.http_status+')' : 'closed — '+esc(fp.http_error||'')}</td></tr>
+      <tr><td>HTTPS :443</td><td>${fp.https_open ? 'open (status '+fp.https_status+')' : 'closed — '+esc(fp.https_error||'')}</td></tr>
+      <tr><td>TLS version</td><td>${esc(fp.tls_version||'—')}</td></tr>
+      <tr><td>ALPN (HTTP/2)</td><td>${esc(alpn)}</td></tr>
+      <tr><td>h2c upgrade</td><td>${fp.h2c && fp.h2c.upgrade ? 'yes' : 'no'}</td></tr>
+      <tr><td>h2c prior-knowledge</td><td>${fp.h2c && fp.h2c.prior_knowledge ? 'yes' : 'no'}</td></tr>
+      <tr><td>Alt-Svc (HTTP/3)</td><td>${esc(fp.alt_svc||'(none)')}</td></tr>
+    </table>`;
+
+  let mailHtml = fp.mail_open_any
+    ? `<table class="fp-table"><tr><td style="width:120px">Port</td><td>Banner</td></tr>${mailRows}</table>`
+    : `<div class="note">No mail-proxy ports (25/110/143/465/587/993/995) are open.</div>`;
+
+  $('#results').innerHTML = `
+    <div class="banner ${ov}">
+      <div class="ov">${esc(r.overall||'')}</div>
+      <div class="tg">Target: ${esc(r.target||'')} · ${new Date((r.finished_at||0)*1000).toLocaleString()}</div>
+    </div>
+    ${fp.cdn_hint ? `<div class="card"><div class="note" style="color:var(--orange)">⚠ ${esc(fp.cdn_hint)}</div></div>` : ''}
+    <div class="card"><h2>Vulnerability assessment</h2>${cveCards}</div>
+    <div class="card"><h2>Fingerprint</h2>${fpHtml}</div>
+    <div class="card"><h2>Mail proxy ports</h2>${mailHtml}</div>
+    <div class="note">Detection only — version-range + banner + ALPN checks per the nginx2root/Xint
+      "how to check for exposure" guidance. Confirm patch status against the vendor/distro advisory
+      (backported fixes keep the old version string).</div>`;
+}
+
+async function runScan(target){
+  const btn = $('#go');
+  btn.disabled = true;
+  $('#status').innerHTML = '<span class="spinner"></span>Scanning '+esc(target)+'… (DNS, HTTP, HTTPS/ALPN, h2c, mail ports)';
+  const t0 = Date.now();
+  try{
+    const r = await fetch('/api/scan', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({target})
+    });
+    const d = await r.json();
+    if(d.error){ $('#status').textContent = 'Error: '+d.error; }
+    else {
+      const secs = ((Date.now()-t0)/1000).toFixed(1);
+      $('#status').innerHTML = 'Scan complete in '+secs+'s.';
+      render(d);
+      loadHistory();
+    }
+  }catch(e){
+    $('#status').textContent = 'Request failed: '+e;
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+async function loadScan(id){
+  $('#status').textContent = 'Loading scan #'+id+'…';
+  try{
+    const r = await fetch('/api/scan/'+id);
+    const d = await r.json();
+    if(d && !d.error){ render(d); $('#status').textContent='Loaded scan #'+id+'.'; }
+    else { $('#status').textContent = 'Not found.'; }
+  }catch(e){ $('#status').textContent = 'Error: '+e; }
+}
+
+$('#go').addEventListener('click', () => {
+  const t = $('#target').value.trim();
+  if(!t){ $('#status').textContent = 'Enter a target first.'; return; }
+  runScan(t);
+});
+$('#target').addEventListener('keydown', e => { if(e.key==='Enter') $('#go').click(); });
+loadHistory();
+</script>
+</body>
+</html>

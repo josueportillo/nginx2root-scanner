@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx2root-scanner
+  labels:
+    app: nginx2root-scanner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx2root-scanner
+  template:
+    metadata:
+      labels:
+        app: nginx2root-scanner
+    spec:
+      containers:
+        - name: scanner
+          image: nginx2root-scanner:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8095
+          env:
+            - name: NGINX2ROOT_PORT
+              value: "8095"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx2root-scanner
+spec:
+  type: ClusterIP
+  selector:
+    app: nginx2root-scanner
+  ports:
+    - port: 80
+      targetPort: 8095
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx2root-scanner
+spec:
+  rules:
+    - host: scanner.example.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx2root-scanner
+                port:
+                  number: 80
